@@ -5,31 +5,21 @@ const path = require('path');
 const cors = require('cors');
 
 const app = express();
-app.use(cors()); // CORS সাপোর্ট যোগ করা হয়েছে
+app.use(cors());
+app.use(express.static(path.join(__dirname, 'public')));
 
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: { origin: "*" },
-    maxHttpBufferSize: 1e7 
+    maxHttpBufferSize: 2e7 // HD ফ্রেমের জন্য ২০ মেগাবাইট লিমিট
 });
-
-// স্ট্যাটিক ফাইল সার্ভ করা (নিশ্চিত করুন আপনার HTML ফাইলগুলো public ফোল্ডারে আছে)
-app.use(express.static(path.join(__dirname, 'public')));
 
 io.on('connection', (socket) => {
-    console.log('Connected Device:', socket.id);
-
     socket.on('store-frame', (frame) => {
+        // volatile ব্যবহার করা হয়েছে যাতে স্লো নেটেও লেটেস্ট ফ্রেম আগে পৌঁছায়
         socket.broadcast.volatile.emit('view-live', frame);
     });
-
-    socket.on('disconnect', () => {
-        console.log('Device Disconnected');
-    });
 });
 
-// রেন্ডারের জন্য পোর্ট সেটআপ
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-    console.log(`🚀 Security Server is running on port ${PORT}`);
-});
+server.listen(PORT, () => console.log(`🚀 HD Server Running: http://localhost:${PORT}`));
