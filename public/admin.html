@@ -11,23 +11,22 @@
         .monitor-bg { background: radial-gradient(circle, #0f172a 0%, #020617 100%); }
     </style>
 </head>
-<body class="monitor-bg text-slate-200 min-h-screen font-sans overflow-x-hidden">
+<body class="monitor-bg text-slate-200 min-h-screen font-sans">
 
     <nav class="p-4 glass flex justify-between items-center sticky top-0 z-50 border-b border-white/5">
-        <h1 class="text-sm font-black tracking-tighter">SHOP EYE <span class="text-emerald-500">PRO HD</span></h1>
-        <div id="con-status" class="text-[10px] font-bold px-3 py-1 rounded-full bg-red-500/20 text-red-500 border border-red-500/30 uppercase">Offline</div>
+        <h1 class="text-sm font-black tracking-tighter italic text-emerald-500">SHOP EYE <span class="text-white">PRO</span></h1>
+        <div id="con-status" class="text-[9px] font-bold px-3 py-1 rounded-full bg-red-500/20 text-red-500 border border-red-500/30 uppercase">Offline</div>
     </nav>
 
     <main class="p-4">
-        <div class="relative w-full max-w-5xl mx-auto rounded-3xl overflow-hidden border-4 border-slate-800 shadow-2xl bg-black aspect-video">
+        <div class="relative w-full max-w-5xl mx-auto rounded-[2rem] overflow-hidden border-2 border-slate-800 bg-black shadow-2xl aspect-video">
             <img id="monitor" class="w-full h-full object-contain">
-            <div class="absolute top-4 right-4 text-[10px] font-mono bg-black/50 px-2 py-1 rounded text-white/50" id="clock">00:00:00</div>
+            <div class="absolute bottom-4 left-4 bg-black/40 backdrop-blur-md px-3 py-1 rounded text-[10px] font-mono text-white/70" id="timer">Waiting for stream...</div>
         </div>
         
-        <div class="mt-6 flex justify-center">
-            <button onclick="location.reload()" class="px-8 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all text-sm font-bold">
-                Reconnect Stream
-            </button>
+        <div class="mt-6 flex gap-4 justify-center">
+            <button onclick="location.reload()" class="flex-1 max-w-[150px] py-4 glass rounded-2xl hover:bg-slate-800 transition text-xs font-bold uppercase tracking-widest">Refresh</button>
+            <button id="snapBtn" class="flex-1 max-w-[150px] py-4 bg-emerald-600 rounded-2xl text-black hover:bg-emerald-400 transition text-xs font-bold uppercase tracking-widest">Snapshot</button>
         </div>
     </main>
 
@@ -35,21 +34,29 @@
         const socket = io();
         const monitor = document.getElementById('monitor');
         const statusBadge = document.getElementById('con-status');
-        const clock = document.getElementById('clock');
+        const snapBtn = document.getElementById('snapBtn');
 
         socket.on('connect', () => {
-            statusBadge.innerText = "Live Connected";
-            statusBadge.className = "text-[10px] font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 uppercase";
+            statusBadge.innerText = "System Online";
+            statusBadge.className = "text-[9px] font-bold px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-500 border border-emerald-500/30 uppercase";
         });
 
         socket.on('view-live', (frame) => {
             monitor.src = frame;
-            clock.innerText = new Date().toLocaleTimeString();
+            document.getElementById('timer').innerText = `HD FEED - ${new Date().toLocaleTimeString()}`;
         });
 
+        // স্নাপশট ডাউনলোড লজিক
+        snapBtn.onclick = () => {
+            const link = document.createElement('a');
+            link.href = monitor.src;
+            link.download = `security_snap_${Date.now()}.webp`;
+            link.click();
+        };
+
         socket.on('disconnect', () => {
-            statusBadge.innerText = "Connection Lost";
-            statusBadge.className = "text-[10px] font-bold px-3 py-1 rounded-full bg-red-500/20 text-red-500 border border-red-500/30 uppercase";
+            statusBadge.innerText = "System Offline";
+            statusBadge.className = "text-[9px] font-bold px-3 py-1 rounded-full bg-red-500/20 text-red-500 border border-red-500/30 uppercase";
         });
     </script>
 </body>

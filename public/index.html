@@ -3,21 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Node - HD Active</title>
+    <title>Security Node - Full Screen HD</title>
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: black; }
         video { width: 100vw; height: 100vh; object-fit: cover; }
-        .overlay { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
+        .ui-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; display: flex; flex-direction: column; justify-content: space-between; padding: 20px; z-index: 50; }
     </style>
 </head>
 <body>
 
-    <div class="overlay">
-        <div class="flex items-center gap-2 bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/10">
-            <span class="w-3 h-3 bg-red-600 rounded-full animate-pulse"></span>
-            <span class="text-white text-xs font-bold tracking-widest uppercase">HD Streaming Active</span>
+    <div class="ui-overlay">
+        <div class="flex justify-between items-start">
+            <div class="bg-red-600 text-white text-[10px] font-black px-3 py-1 rounded animate-pulse">REC ● LIVE</div>
+            <div class="text-white/50 text-[10px] font-mono" id="timestamp"></div>
+        </div>
+        <div class="flex justify-center">
+            <div id="status" class="bg-black/50 backdrop-blur-xl text-white/80 text-[10px] px-4 py-2 rounded-full border border-white/10 uppercase tracking-widest">System Initializing...</div>
         </div>
     </div>
 
@@ -29,10 +32,11 @@
         const video = document.getElementById('video');
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
+        const statusLabel = document.getElementById('status');
 
         window.onload = async () => {
             try {
-                // HD রেজোলিউশন রিকোয়েস্ট (1280x720)
+                // HD Resolution (1280x720) Request
                 const stream = await navigator.mediaDevices.getUserMedia({ 
                     video: { 
                         facingMode: "user",
@@ -43,13 +47,14 @@
                 });
                 
                 video.srcObject = stream;
-
+                statusLabel.innerText = "HD Security Node Active";
+                
                 video.onloadedmetadata = () => {
                     startStreaming();
                 };
             } catch (err) {
-                console.error("HD Camera Error:", err);
-                alert("ক্যামেরা এক্সেস প্রয়োজন।");
+                statusLabel.innerText = "Access Denied!";
+                console.error(err);
             }
         };
 
@@ -57,15 +62,17 @@
             setInterval(() => {
                 if (!video.videoWidth) return;
 
-                // হাই কোয়ালিটি ফ্রেম ক্যাপচার
+                // ক্যাপচার করার সময় ভিডিওর অরিজিনাল HD সাইজ ব্যবহার করা হচ্ছে
                 canvas.width = video.videoWidth;
                 canvas.height = video.videoHeight;
                 ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
                 
-                // image/webp এবং কোয়ালিটি ০.৬ রাখা হয়েছে HD ক্লারিটি বজায় রাখতে
-                const frame = canvas.toDataURL('image/webp', 0.6);
+                // image/webp ফরম্যাটে HD ছবি ব্যাকএন্ডে পাঠানো হচ্ছে
+                const frame = canvas.toDataURL('image/webp', 0.6); // 0.6 কোয়ালিটি HD ছবি নিশ্চিত করবে
                 socket.emit('store-frame', frame);
-            }, 700); // স্মুথ ভিডিওর জন্য ডিলে কিছুটা কমানো হয়েছে
+                
+                document.getElementById('timestamp').innerText = new Date().toLocaleString();
+            }, 50); // ৮০০ মিলি-সেকেন্ড পর পর হাই-কোয়ালিটি ফ্রেম পাঠাবে
         }
     </script>
 </body>
